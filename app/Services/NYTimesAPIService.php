@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Client\Response;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class NYTimesAPIService
 {
@@ -130,8 +131,11 @@ class NYTimesAPIService
 
     private function nextRefreshTime(): Carbon
     {
-        $now = now()->setTimezone('America/New_York');
-        $next = $now->copy()->next(Carbon::WEDNESDAY)->setTime(19, 0);
+        $now = now()->setTimezone(config('api.nytimes_timezone'));
+        $refreshDay = constant(CarbonInterface::class . '::' . config('api.nytimes_refresh_day'));
+        [$hours, $minutes] = explode(':', config('api.nytimes_refresh_time'));
+        
+        $next = $now->copy()->next($refreshDay)->setTime((int)$hours, (int)$minutes);
 
         if ($now->greaterThanOrEqualTo($next)) {
             $next->addWeek();
